@@ -22,6 +22,18 @@
 5、修改config.toml,根据自己需求设定
 6、运行程序，输入验证口令，输入验证码，输入/get命令开始获取种子。
 
+## 已支持网站列表：
+1.MoeCat
+2.PThome
+3.PTer
+4.HDStreet
+5.CHDBits
+6.OurBits
+7.HDSky
+8.SpringSunDay
+9.NASA
+10.OpenCD
+11.HDHome
 ### 更新信息
 目前程序暂定版本为0.0.1beta，暂时支持站点为三个，MoeCat、铂金家、猫站，程序更新将唯一更新到本帖。遇到任何问题或不知如何操作可开启issues。
 
