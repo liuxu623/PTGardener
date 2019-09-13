@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/imroc/req"
+
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -25,11 +27,14 @@ type Torrent struct {
 }
 
 //
-func getTorMoeCat() []Torrent {
-	goon := true
+func getMoeCat() []Torrent {
 	var torrentList []Torrent
-	for goon {
-		resp, err := r.Get("https://www.moecat.best/torrents.php")
+	for goon := 3; goon > 0; goon-- {
+		header := req.Header{
+			"cookie":     cfg.MoeCatCookies,
+			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+		}
+		resp, err := r.Get("https://www.moecat.best/torrents.php", header)
 		if err != nil {
 			log.Println(err)
 			time.Sleep(time.Duration(10) * time.Second)
@@ -94,15 +99,18 @@ func getTorMoeCat() []Torrent {
 				})
 			}
 		})
-		goon = false
+		goon = 0
 	}
 	return torrentList
 }
 func getPTHome() []Torrent {
-	goon := true
 	var torrentList []Torrent
-	for goon {
-		resp, err := r.Get("https://www.pthome.net/torrents.php")
+	for goon := 3; goon > 0; goon-- {
+		header := req.Header{
+			"cookie":     cfg.PTHomeCookies,
+			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+		}
+		resp, err := r.Get("https://www.pthome.net/torrents.php", header)
 		if err != nil {
 			log.Println(err)
 			time.Sleep(time.Duration(10) * time.Second)
@@ -178,15 +186,18 @@ func getPTHome() []Torrent {
 				})
 			}
 		})
-		goon = false
+		goon = 0
 	}
 	return torrentList
 }
 func getPTer() []Torrent {
-	goon := true
 	var torrentList []Torrent
-	for goon {
-		resp, err := r.Get("https://pter.club/torrents.php")
+	for goon := 3; goon > 0; goon-- {
+		header := req.Header{
+			"cookie":     cfg.PTerCookies,
+			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+		}
+		resp, err := r.Get("https://pter.club/torrents.php", header)
 		if err != nil {
 			log.Println(err)
 			time.Sleep(time.Duration(10) * time.Second)
@@ -268,37 +279,544 @@ func getPTer() []Torrent {
 						cc = strings.TrimSpace(cc)
 						torrent.Title2 = cc
 					}
-					if i == 3 {
+					if i == 4 {
 						s.Find("a").Each(func(i int, s *goquery.Selection) {
 							alt, ok := s.Find("img").Attr("alt")
 							if ok {
 								if alt == "download" {
 									href, _ := s.Attr("href")
+									href = strings.Split(href, "&")[0]
 									torrent.URL = "https://pter.club/" + href
 								}
 							}
 						})
 					}
-					if i == 5 {
+					if i == 8 {
 						torrent.Living = s.Text()
 					}
-					if i == 6 {
+					if i == 9 {
 						torrent.Size = s.Text()
 					}
-					if i == 7 {
+					if i == 10 {
 						torrent.Four = "↑" + s.Text()
 					}
-					if i == 8 {
+					if i == 11 {
 						torrent.Four += " ↓" + s.Text()
 					}
-					if i == 9 {
+					if i == 12 {
 						torrent.Four += " ✓" + s.Text()
 						torrentList = append(torrentList, torrent)
 					}
 				})
 			}
 		})
-		goon = false
+		goon = 0
+	}
+	return torrentList
+}
+func getHDStreet() []Torrent {
+	log.Println("================check start==============")
+	var torrentList []Torrent
+	for goon := 3; goon > 0; goon-- {
+		headers := req.Header{
+			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+			"Referer":    "https://hdstreet.club/index.php",
+			"cookie":     cfg.HDStreetCookies,
+		}
+		resp, err := r.Get("https://hdstreet.club/torrents.php", headers)
+		if err != nil {
+			log.Println(err)
+			time.Sleep(time.Duration(10) * time.Second)
+			continue
+		}
+		doc, err := goquery.NewDocumentFromResponse(resp.Response())
+		if err != nil {
+			log.Println(err)
+		}
+		var torrent Torrent
+		doc.Find("table.torrents>tbody>tr").Each(func(i int, s *goquery.Selection) {
+			if i > 1 && i%2 == 0 {
+				s.Find("tr>td").Each(func(i int, s *goquery.Selection) {
+					if i == 0 {
+						torrent.Ttype, _ = s.Find("a img").Attr("title")
+						torrent.Site = "HDStreet"
+					}
+					if i == 1 {
+						torrent.Sales, _ = s.Find("a+img").Attr("title")
+						torrent.Sales += s.Find("a+img+b").Text()
+						torrent.Sales = strings.Replace(torrent.Sales, "[", "", -1)
+						torrent.Sales = strings.Replace(torrent.Sales, "]", "", -1)
+						torrent.Sales = strings.Replace(torrent.Sales, "剩余：", "△", -1)
+						if torrent.Sales == "" {
+							torrent.Sales = "无优惠"
+						}
+					}
+					if i == 2 {
+						torrent.Title1, _ = s.Find("a").Attr("title")
+						torrent.Title1 = strings.TrimSpace(torrent.Title1)
+						s.Find("a").Remove()
+						s.Find("b").Remove()
+						torrent.Title2 = strings.TrimSpace(s.Text())
+					}
+					if i == 3 {
+						torrent.URL, _ = s.Find("a").Attr("href")
+						torrent.URL = "https://hdstreet.club/" + torrent.URL
+					}
+					if i == 4 {
+						torrent.Four = "↑" + s.Text()
+					}
+					if i == 5 {
+						torrent.Four += " ↓" + s.Text()
+					}
+					if i == 6 {
+						torrent.Four += " ✓" + s.Text()
+					}
+					if i == 7 {
+						torrent.Four += " ✗" + s.Text()
+					}
+				})
+			}
+			if i > 1 && i%2 == 1 {
+				s.Find("tr>td").Each(func(i int, s *goquery.Selection) {
+					if i == 1 {
+						torrent.Living = s.Text()
+					}
+					if i == 2 {
+						torrent.Size = s.Text()
+						torrentList = append(torrentList, torrent)
+					}
+				})
+			}
+		})
+		goon = 0
+	}
+	for goon := 3; goon > 0; goon-- {
+		headers := req.Header{
+			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+			"Referer":    "https://hdstreet.club/index.php",
+			"cookie":     cfg.HDStreetCookies,
+		}
+		resp, err := r.Get("https://hdstreet.club/torrentsasia.php", headers)
+		if err != nil {
+			log.Println(err)
+			time.Sleep(time.Duration(10) * time.Second)
+			continue
+		}
+		doc, err := goquery.NewDocumentFromResponse(resp.Response())
+		if err != nil {
+			log.Println(err)
+		}
+		var torrent Torrent
+		doc.Find("table.torrents>tbody>tr").Each(func(i int, s *goquery.Selection) {
+			if i > 1 && i%2 == 0 {
+				s.Find("tr>td").Each(func(i int, s *goquery.Selection) {
+					if i == 0 {
+						torrent.Ttype, _ = s.Find("a img").Attr("title")
+						torrent.Site = "HDStreet"
+					}
+					if i == 1 {
+						torrent.Sales, _ = s.Find("a+img").Attr("title")
+						torrent.Sales += s.Find("a+img+b").Text()
+						torrent.Sales = strings.Replace(torrent.Sales, "[", "", -1)
+						torrent.Sales = strings.Replace(torrent.Sales, "]", "", -1)
+						torrent.Sales = strings.Replace(torrent.Sales, "剩余：", "△", -1)
+						if torrent.Sales == "" {
+							torrent.Sales = "无优惠"
+						}
+					}
+					if i == 2 {
+						torrent.Title1, _ = s.Find("a").Attr("title")
+						torrent.Title1 = strings.TrimSpace(torrent.Title1)
+						s.Find("a").Remove()
+						s.Find("b").Remove()
+						torrent.Title2 = strings.TrimSpace(s.Text())
+					}
+					if i == 3 {
+						torrent.URL, _ = s.Find("a").Attr("href")
+						torrent.URL = "https://hdstreet.club/" + torrent.URL
+					}
+					if i == 4 {
+						torrent.Four = "↑" + s.Text()
+					}
+					if i == 5 {
+						torrent.Four += " ↓" + s.Text()
+					}
+					if i == 6 {
+						torrent.Four += " ✓" + s.Text()
+					}
+					if i == 7 {
+						torrent.Four += " ✗" + s.Text()
+					}
+				})
+			}
+			if i > 1 && i%2 == 1 {
+				s.Find("tr>td").Each(func(i int, s *goquery.Selection) {
+					if i == 1 {
+						torrent.Living = s.Text()
+					}
+					if i == 2 {
+						torrent.Size = s.Text()
+						torrentList = append(torrentList, torrent)
+					}
+				})
+			}
+		})
+		goon = 0
+	}
+	for _, v := range torrentList {
+		log.Println(v.URL)
+	}
+	return torrentList
+}
+func getCHDBits() []Torrent {
+	var torrentList []Torrent
+	for goon := 3; goon > 0; goon-- {
+		header := req.Header{
+			"cookie":     cfg.CHDBitsCookies,
+			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+		}
+		resp, err := r.Get("https://chdbits.co/torrents.php", header)
+		if err != nil {
+			log.Println(err)
+			time.Sleep(time.Duration(10) * time.Second)
+			continue
+		}
+		doc, err := goquery.NewDocumentFromResponse(resp.Response())
+		if err != nil {
+			log.Println(err)
+		}
+		var torrent Torrent
+		doc.Find("table.torrents tbody tr").Each(func(i int, s *goquery.Selection) {
+			if i != 0 {
+				s.Find(".rowfollow").Each(func(i int, s *goquery.Selection) {
+					if i == 0 {
+						torrent.Ttype, _ = s.Find("a img").Attr("title")
+						torrent.Site = "CHDBits"
+					}
+					if i == 1 {
+						torrent.Sales = ""
+						s.Find("img").Each(func(i int, s *goquery.Selection) {
+							hh, _ := s.Attr("alt")
+							if hh != "Sticky" && hh != "download" && hh != "Unbookmarked" && hh != "Bookmarked" {
+								if hh == "H&R" {
+									hh = "H%26R "
+								}
+								torrent.Sales += hh
+							}
+						})
+						torrent.Sales += "△"
+						salestime := s.Find("span").Text()
+						if torrent.Sales == "△" {
+							torrent.Sales = "无优惠"
+						}
+						if strings.Contains(salestime, "[email") {
+							torrent.Sales += strings.Split(salestime, "]")[1]
+						} else {
+							torrent.Sales += salestime
+						}
+						// torrent.Sales = strings.Replace(torrent.Sales, "[email"+`&#\d+;`+"protected]", "", -1)
+						// log.Println(torrent.Sales)
+						s.Find("td").Each(func(i int, s *goquery.Selection) {
+							if i == 0 {
+								torrent.Title1 = strings.TrimSpace(s.Find("a").Text())
+								// s.Find("a").Remove()
+								// s.Find("b").Remove()
+								// cc := s.Text()
+								// cc = strings.Replace(cc, "剩余时间：", "", -1)
+								// cc = strings.TrimSpace(cc)
+								torrent.Title2 = s.Find("font").Text()
+							}
+							if i == 1 {
+								dd, _ := s.Find("a").Attr("href")
+								torrent.URL = "https://chdbits.co/" + dd
+							}
+						})
+					}
+					if i == 3 {
+						torrent.Living = s.Text()
+					}
+					if i == 4 {
+						torrent.Size = s.Text()
+					}
+					if i == 5 {
+						torrent.Four = "↑" + s.Text()
+					}
+					if i == 6 {
+						torrent.Four += " ↓" + s.Text()
+					}
+					if i == 7 {
+						torrent.Four += " ✓" + s.Text()
+						torrentList = append(torrentList, torrent)
+					}
+				})
+			}
+		})
+		goon = 0
+	}
+	return torrentList
+}
+func getOurBits() []Torrent {
+	var torrentList []Torrent
+	for goon := 3; goon > 0; goon-- {
+		header := req.Header{
+			"cookie":     cfg.OurBitsCookies,
+			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+		}
+		resp, err := r.Get("https://ourbits.club/torrents.php", header)
+		if err != nil {
+			log.Println(err)
+			time.Sleep(time.Duration(10) * time.Second)
+			continue
+		}
+		doc, err := goquery.NewDocumentFromResponse(resp.Response())
+		if err != nil {
+			log.Println(err)
+		}
+		var torrent Torrent
+		doc.Find("table.torrents tbody tr").Each(func(i int, s *goquery.Selection) {
+			if i != 0 {
+				s.Find("td").Each(func(i int, s *goquery.Selection) {
+					if i == 0 {
+						s.Find("img").Each(func(i int, s *goquery.Selection) {
+							if i == 0 {
+								torrent.Ttype, _ = s.Attr("title")
+							}
+						})
+						torrent.Site = "OurBits"
+					}
+					if i == 2 {
+						torrent.Title1 = s.Find("a").Eq(0).Text()
+						torrent.Title1 = strings.Replace(torrent.Title1, "[email protected]", "", -1)
+						s.Find("img").Each(func(i int, s *goquery.Selection) {
+							alt, _ := s.Attr("alt")
+							if alt != "Sticky" {
+								torrent.Sales = alt
+							}
+						})
+						torrent.Sales += "△"
+						salestime := s.Find("span").Text()
+						if torrent.Sales == "△" {
+							torrent.Sales = "无优惠"
+						}
+						if strings.Contains(salestime, "[email") {
+							torrent.Sales += strings.Split(salestime, "]")[1]
+						} else {
+							torrent.Sales += salestime
+						}
+						s.Find("a").Eq(0).Remove()
+						s.Find("span").Remove()
+						cc := s.Text()
+						cc = strings.Replace(cc, "剩余时间：", "", -1)
+						cc = strings.TrimSpace(cc)
+						torrent.Title2 = cc
+					}
+					if i == 6 {
+						s.Find("a").Each(func(i int, s *goquery.Selection) {
+							alt, ok := s.Find("img").Attr("alt")
+							if ok {
+								if alt == "download" {
+									href, _ := s.Attr("href")
+									torrent.URL = "https://ourbits.club/" + href
+								}
+							}
+						})
+					}
+					if i == 8 {
+						torrent.Living = s.Text()
+					}
+					if i == 9 {
+						torrent.Size = s.Text()
+					}
+					if i == 10 {
+						torrent.Four = "↑" + s.Text()
+					}
+					if i == 11 {
+						torrent.Four += " ↓" + s.Text()
+					}
+					if i == 12 {
+						torrent.Four += " ✓" + s.Text()
+						torrentList = append(torrentList, torrent)
+					}
+				})
+			}
+		})
+		goon = 0
+	}
+	return torrentList
+
+}
+func getHDSkey() []Torrent {
+	var torrentList []Torrent
+	for goon := 3; goon > 0; goon-- {
+		header := req.Header{
+			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+			"cookie":     cfg.HDSkyCookies,
+		}
+		resp, err := r.Get("https://hdsky.me/torrents.php", header)
+		if err != nil {
+			log.Println(err)
+			time.Sleep(time.Duration(10) * time.Second)
+			continue
+		}
+		doc, err := goquery.NewDocumentFromResponse(resp.Response())
+		if err != nil {
+			log.Println(err)
+		}
+		var torrent Torrent
+		doc.Find("table.torrents tbody tr").Each(func(i int, s *goquery.Selection) {
+			if i != 0 {
+				s.Find(".rowfollow").Each(func(i int, s *goquery.Selection) {
+					if i == 0 {
+						torrent.Ttype, _ = s.Find("a img").Attr("title")
+						torrent.Ttype = strings.Split(torrent.Ttype, "/")[1]
+						torrent.Site = "HDSky"
+					}
+					if i == 1 {
+						torrent.Sales = ""
+						s.Find("img").Each(func(i int, s *goquery.Selection) {
+							hh, _ := s.Attr("alt")
+							if hh != "Sticky" && hh != "download" && hh != "Unbookmarked" && hh != "Bookmarked" {
+								if hh == "H&R" {
+									hh = "H%26R "
+								}
+								torrent.Sales += hh
+							}
+						})
+						torrent.Sales += "△"
+						salestime := s.Find("span").Text()
+						if torrent.Sales == "△" {
+							torrent.Sales = "无优惠"
+						}
+						if strings.Contains(salestime, "[email") {
+							torrent.Sales += strings.Split(salestime, "]")[1]
+						} else {
+							torrent.Sales += salestime
+						}
+						// torrent.Sales = strings.Replace(torrent.Sales, "[email"+`&#\d+;`+"protected]", "", -1)
+						// log.Println(torrent.Sales)
+						s.Find("td").Each(func(i int, s *goquery.Selection) {
+							if i == 0 {
+								torrent.Title1 = strings.TrimSpace(s.Find("a").Text())
+								s.Find("a").Remove()
+								s.Find("b").Remove()
+								cc := s.Text()
+								cc = strings.Replace(cc, "[优惠剩余时间：]", "", -1)
+								cc = strings.TrimSpace(cc)
+								torrent.Title2 = cc
+							}
+							if i == 1 {
+								dd, _ := s.Find("form").Eq(0).Attr("action")
+								torrent.URL = "https://hdsky.me/" + dd
+							}
+						})
+					}
+					if i == 3 {
+						torrent.Living = s.Text()
+					}
+					if i == 4 {
+						torrent.Size = s.Text()
+					}
+					if i == 5 {
+						torrent.Four = "↑" + s.Text()
+					}
+					if i == 6 {
+						torrent.Four += " ↓" + s.Text()
+					}
+					if i == 7 {
+						torrent.Four += " ✓" + s.Text()
+						torrentList = append(torrentList, torrent)
+					}
+				})
+			}
+		})
+		goon = 0
+	}
+	return torrentList
+}
+func getSSD() []Torrent {
+	var torrentList []Torrent
+	for goon := 3; goon > 0; goon-- {
+		header := req.Header{
+			"cookie":     cfg.SSDCookies,
+			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+		}
+		resp, err := r.Get("https://springsunday.net/torrents.php", header)
+		if err != nil {
+			log.Println(err)
+			time.Sleep(time.Duration(10) * time.Second)
+			continue
+		}
+		doc, err := goquery.NewDocumentFromResponse(resp.Response())
+		if err != nil {
+			log.Println(err)
+		}
+		var torrent Torrent
+		doc.Find("table.torrents tbody tr").Each(func(i int, s *goquery.Selection) {
+			if i != 0 {
+				s.Find("td").Each(func(i int, s *goquery.Selection) {
+					if i == 0 {
+						s.Find("img").Each(func(i int, s *goquery.Selection) {
+							if i == 0 {
+								torrent.Ttype, _ = s.Attr("title")
+								torrent.Ttype = strings.Split(torrent.Ttype, "(")[1]
+								torrent.Ttype = strings.Replace(torrent.Ttype, ")", "", -1)
+							}
+						})
+						torrent.Site = "PTer"
+					}
+					if i == 2 {
+						torrent.Title1 = s.Find("a").Eq(0).Text()
+						torrent.Title1 = strings.Replace(torrent.Title1, "[email protected]", "", -1)
+						torrent.Sales, _ = s.Find("a").Eq(1).Find("img").Attr("alt")
+						torrent.Sales += "△"
+						salestime := s.Find("span").Text()
+						if torrent.Sales == "△" {
+							torrent.Sales = "无优惠"
+						}
+						if strings.Contains(salestime, "[email") {
+							torrent.Sales += strings.Split(salestime, "]")[1]
+						} else {
+							torrent.Sales += salestime
+						}
+						s.Find("a").Eq(0).Remove()
+						s.Find("span").Remove()
+						cc := s.Text()
+						cc = strings.Replace(cc, "剩余时间：", "", -1)
+						cc = strings.TrimSpace(cc)
+						torrent.Title2 = cc
+					}
+					if i == 4 {
+						s.Find("a").Each(func(i int, s *goquery.Selection) {
+							alt, ok := s.Find("img").Attr("alt")
+							if ok {
+								if alt == "download" {
+									href, _ := s.Attr("href")
+									href = strings.Split(href, "&")[0]
+									torrent.URL = "https://pter.club/" + href
+								}
+							}
+						})
+					}
+					if i == 8 {
+						torrent.Living = s.Text()
+					}
+					if i == 9 {
+						torrent.Size = s.Text()
+					}
+					if i == 10 {
+						torrent.Four = "↑" + s.Text()
+					}
+					if i == 11 {
+						torrent.Four += " ↓" + s.Text()
+					}
+					if i == 12 {
+						torrent.Four += " ✓" + s.Text()
+						torrentList = append(torrentList, torrent)
+					}
+				})
+			}
+		})
+		goon = 0
 	}
 	return torrentList
 }

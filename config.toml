@@ -2,38 +2,93 @@
 BotAPI=''  #机器人的API，webhook也要设置这个地址
 BotSecret=''    #防止别人找到机器人乱用，输入正确的暗号才能收到种子，请一定要修改
 ProxyURL='http://127.0.0.1:1087'   #连接telegram的代理地址，不使用代理请留空
-
+TitleStyle='$Site〄$Type▷$Title1\n$Title2$Change'
 #促销过滤器
 OnlyFree= false   #是否仅推送免费种子
 #是否推送首次获取种子，如果为true，则发送首次获得的50个种子，false则等到有新种子或变化
 FirstSend=false
 
-#Transmission 下载模式
-TRMode=1    #0为下载种子到本地文件，1为远程API添加种子。
+#远程下载模式
+#下载模式0暂时取消功能
+DownloadMode=1    #0为下载种子到本地文件，1为远程Tr添加种子,2为远程Qb添加种子。
 
-#Transmission 本地保存种子文件夹,仅当TRMode为0时有效，留空时为程序所在目录
-TRFilePath='' #文件路径请在最后添加斜线，如“/share/download/torrents/”
+#Transmission 本地保存种子文件夹,仅当DownloadMode为0时有效，留空时为程序所在目录
+DownloadFilePath='' #文件路径请在最后添加斜线，如“/share/download/torrents/”
 
-#Transmission 远程连接账户，仅当TRMode为1时有效
+#Transmission 远程连接账户，仅当DownloadMode为1时有效
 TRUsername=''
 TRPassword=''
 
 #Transmission 远程连接地址
-TRRequestURL=''
+TRRequestURL='' #请改成自己的地址,地址不要添加http，直接裸域名或IP
 TRRequestPort=9091
+
+#QBittorrent 远程连接账户，仅当DownloadMode为2时有效
+QBUsername=''
+QBPassword=''
+
+##QBittorrent 远程连接地址
+QBRequestURL=''
+QBRequestPort=8085
 
 #MoeCat 账户配置,不想监听请留空
 MoeCatUsername=''
 MoeCatPassword=''
+MoeCatCookies=''
 
 #PThome 账户配置,不想监听请留空
 PTHomeUsername=''
 PTHomePassword=''
+PTHomeCookies=''
 
 #PTer 账户配置，不想监听请留空
 PTerUsername=''
 PTerPassword=''
+PTerCookies=''
 PTerSSL=true #是否使用SSL数据加密协议连接Tracker(BT客户端)
 PTerVerify=false #是否已开启两步验证,两步验证功能未测试
+
+#HDStreet 账户配置，不想监听请留空
+HDStreetUsername=''
+HDStreetPassword=''
+HDStreetCookies=''
+
+#CHDBits 账户配置，不想监听请留空
+CHDBitsUsername=''
+CHDBitsPassword=''
+CHDBitsCookies=''
+
+#OurBits 账户配置,不想监听请留空
+OurBitsUsername=''
+OurBitsPassword=''
+OurBitsCookies=''
+OurBitsSSL=true
+OurBitsVerify=false #是否已开启两步验证
+
+#HDSky 账户配置，不想监听请留空
+HDSkyUsername=''
+HDSkyPassword=''
+HDSkyCookies=''
+HDSkyVerify=false
+
+#SpringSunDay 账户配置，不想监听请留空
+SSDUsername=''
+SSDPassword=''
+SSDCookies=''
+
+#NASA 账户配置，不想监听请留空
+NASAUsername=''
+NASAPassword=''
+NASACookies=''
+
+#OpenCD 账户配置，不想监听请留空
+OpenCDUsername=''
+OpenCDPassword=''
+OpenCDCookies=''
+
+#HDHome 账户配置，不想监听请留空
+HDHomeUsername=''
+HDHomePassword=''
+HDHomeCookies=''
 
 #更多站点待补充

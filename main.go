@@ -2,16 +2,15 @@ package main
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/url"
+	"net"
+	"net/http"
 	"strings"
+	"sync"
 	"time"
-
-	"github.com/hekmon/transmissionrpc"
 
 	"github.com/BurntSushi/toml"
 
@@ -22,35 +21,81 @@ import (
 
 //Config 配置文件
 type Config struct {
-	BotAPI         string
-	BotSecret      string
-	ProxyURL       string
-	OnlyFree       bool
-	FirstSend      bool
-	TRMode         int
-	TRFilePath     string
-	TRUsername     string
-	TRPassword     string
-	TRRequestURL   string
-	TRRequestPort  uint16
-	MoeCatUsername string
-	MoeCatPassword string
-	PTHomeUsername string
-	PTHomePassword string
-	PTerUsername   string
-	PTerPassword   string
-	PTerSSL        bool
-	PTerVerify     bool
+	BotAPI           string
+	BotSecret        string
+	ProxyURL         string
+	TitleStyle       string
+	OnlyFree         bool
+	FirstSend        bool
+	DownloadMode     int
+	DownloadFilePath string
+	TRUsername       string
+	TRPassword       string
+	TRRequestURL     string
+	TRRequestPort    uint16
+	QBUsername       string
+	QBPassword       string
+	QBRequestURL     string
+	QBRequestPort    int
+	MoeCatUsername   string
+	MoeCatPassword   string
+	MoeCatCookies    string
+	PTHomeUsername   string
+	PTHomePassword   string
+	PTHomeCookies    string
+	PTerUsername     string
+	PTerPassword     string
+	PTerCookies      string
+	PTerSSL          bool
+	PTerVerify       bool
+	HDStreetUsername string
+	HDStreetPassword string
+	HDStreetCookies  string
+	CHDBitsUsername  string
+	CHDBitsPassword  string
+	CHDBitsCookies   string
+	OurBitsUsername  string
+	OurBitsPassword  string
+	OurBitsCookies   string
+	OurBitsSSL       bool
+	OurBitsVerify    bool
+	HDSkyUsername    string
+	HDSkyPassword    string
+	HDSkyCookies     string
+	HDSkyVerify      bool
+	SSDUsername      string
+	SSDPassword      string
+	SSDCookies       string
+	NASAUsername     string
+	NASAPassword     string
+	NASACookies      string
+	OpenCDUsername   string
+	OpenCDPassword   string
+	OpenCDCookies    string
+	HDHomeUsername   string
+	HDHomePassword   string
+	HDHomeCookies    string
 }
 
+//不走代理的客户端,用来访问PT
 var r = req.New()
+var loginOK sync.WaitGroup
+
+// 可能走代理的客户端，用来连接电报
 var rq = req.New()
 var torbot BotAPI
 var chanTorUp = make(chan *Update, 100)
+
+//收验证码的chan
 var chanimage = make(chan string)
 var chatID int64
 var cfg Config
-var chanGoPTer = make(chan int)
+
+//按顺序处理登录的阻塞
+var chanGoPTer = make(chan int, 1)
+var chanGoOurBits = make(chan int, 1)
+var chanGoHDSky = make(chan int, 1)
+var chanGoSSD = make(chan int, 1)
 
 //MoeCatTorList is
 var MoeCatTorList []Torrent
@@ -60,6 +105,21 @@ var PTHomeTorList []Torrent
 
 //PTerTorList is
 var PTerTorList []Torrent
+
+//HDStreetList is
+var HDStreetList []Torrent
+
+//CHDBitsList is
+var CHDBitsList []Torrent
+
+// OurBitsList is
+var OurBitsList []Torrent
+
+// HDSkyList is
+var HDSkyList []Torrent
+
+// SSDList is
+var SSDList []Torrent
 
 func main() {
 	if _, err := toml.DecodeFile("./config.toml", &cfg); err != nil {
@@ -71,13 +131,23 @@ func main() {
 	go torBotOperator()
 	botUpdateListen()
 }
+
+//用gin监听消息
 func botUpdateListen() {
 	torbot.API = cfg.BotAPI
 	torbot.Update = make(chan *Update, 500)
 	app := gin.Default()
 	app.Any("/"+torbot.API, handler)
-	app.Run(":9388")
+	// app.Run("0.0.0.0:8443")
+	server := &http.Server{Handler: app}
+	l, err := net.Listen("tcp4", "0.0.0.0:9388")
+	if err != nil {
+		log.Println(err)
+	}
+	err = server.Serve(l)
 }
+
+//将消息转为结构体发送到消息chan
 func handler(c *gin.Context) {
 	var u Update
 	reader := c.Request.Body
@@ -91,43 +161,98 @@ func handler(c *gin.Context) {
 	}
 	chanTorUp <- &u
 }
+
+//循环处理消息
 func torBotOperator() {
 	// c := cron.New()
 	// c.AddFunc("0 */15 * * * ?", checkMoeCat)
 	// c.AddFunc("0 1-59/15 * * * ?", checkPTHome)
 	// c.Start()
+	firstMsgCount := 1
 	for u := range chanTorUp {
+		// log.Println("已收到bot传来消息")
 		if u.CallbackQuery == nil {
 			if u.Message.Text == cfg.BotSecret {
+				// log.Println("已确认口令通过")
 				chatID = u.Message.Chat.ID
-				if cfg.PTHomeUsername != "" {
+				if cfg.PTHomeUsername != "" || cfg.PTHomeCookies != "" {
+					// log.Println("已启动登录协程")
 					go loginPTHome(cfg.PTHomeUsername, cfg.PTHomePassword)
 				} else {
 					chanGoPTer <- 1
 				}
-				if cfg.MoeCatUsername != "" {
+				if cfg.MoeCatUsername != "" || cfg.MoeCatCookies != "" {
 					loginMoeCat(cfg.MoeCatUsername, cfg.MoeCatPassword)
 				}
-				if cfg.PTerUsername != "" {
-					go loginPTer(cfg.PTerUsername, cfg.PTerPassword)
+				if cfg.HDStreetUsername != "" || cfg.HDStreetCookies != "" {
+					loginHDStreet(cfg.HDStreetUsername, cfg.HDStreetPassword)
 				}
+				if cfg.CHDBitsUsername != "" || cfg.CHDBitsCookies != "" {
+					loginCHDBits(cfg.CHDBitsUsername, cfg.CHDBitsPassword)
+				}
+				if cfg.PTerUsername != "" || cfg.PTerCookies != "" {
+					go loginPTer(cfg.PTerUsername, cfg.PTerPassword)
+				} else {
+					chanGoOurBits <- 1
+				}
+				if cfg.OurBitsUsername != "" || cfg.OurBitsCookies != "" {
+					go loginOurBits(cfg.OurBitsUsername, cfg.OurBitsPassword)
+				} else {
+					chanGoHDSky <- 1
+				}
+				if cfg.HDSkyUsername != "" || cfg.HDSkyCookies != "" {
+					go loginHDSky(cfg.HDSkyUsername, cfg.HDSkyPassword)
+				}
+
+				go loginDone()
 			}
 			if u.Message.Text == "/get" {
 				if chatID != 0 {
-					MoeCatTorList = getTorMoeCat()
-					PTHomeTorList = getPTHome()
-					PTerTorList = getPTer()
+					if cfg.HDStreetUsername != "" || cfg.HDStreetCookies != "" {
+						HDStreetList = getHDStreet()
+					}
+					if cfg.MoeCatUsername != "" || cfg.MoeCatCookies != "" {
+						MoeCatTorList = getMoeCat()
+					}
+					if cfg.PTHomeUsername != "" || cfg.PTHomeCookies != "" {
+						PTHomeTorList = getPTHome()
+					}
+					if cfg.PTerUsername != "" || cfg.PTerCookies != "" {
+						PTerTorList = getPTer()
+					}
+					if cfg.CHDBitsUsername != "" || cfg.CHDBitsCookies != "" {
+						CHDBitsList = getCHDBits()
+					}
+					if cfg.OurBitsUsername != "" || cfg.OurBitsCookies != "" {
+						OurBitsList = getOurBits()
+					}
+					if cfg.HDSkyUsername != "" || cfg.HDSkyCookies != "" {
+						HDSkyList = getHDSkey()
+					}
 					if cfg.FirstSend {
 						sendTorrents(&MoeCatTorList)
 						sendTorrents(&PTHomeTorList)
 						sendTorrents(&PTerTorList)
+						sendTorrents(&HDStreetList)
+						sendTorrents(&CHDBitsList)
+						sendTorrents(&OurBitsList)
+						sendTorrents(&HDSkyList)
+						cfg.FirstSend = false
 					}
 					go checkAll()
+				} else {
+					torbot.sendMessage(u.Message.Chat.ID, "请先输入设定的BotSecret,然后按照提示登录账号")
+					firstMsgCount--
 				}
 			}
 			if chatID != 0 {
 				if len(u.Message.Text) == 6 {
 					chanimage <- u.Message.Text
+				}
+			} else {
+				if firstMsgCount > 0 {
+					torbot.sendMessage(u.Message.Chat.ID, "请先输入设定的BotSecret,然后按照提示登录账号")
+					firstMsgCount--
 				}
 			}
 
@@ -141,95 +266,78 @@ func torBotOperator() {
 		}
 	}
 }
-func downloadTorrent(URL string) {
-	resp, err := r.Get(URL)
-	if err != nil {
-		log.Println(err)
-	}
-	hh := resp.Response().Header
-	bb, _ := url.QueryUnescape(hh["Content-Disposition"][0])
-	cc := strings.Split(bb, "=")
-	if cfg.TRMode == 0 {
-		err = resp.ToFile(cfg.TRFilePath + cc[1])
-		if err != nil {
-			log.Println(err)
-		}
-	}
-	if cfg.TRMode == 1 {
-		input, _ := resp.ToBytes()
-		transmissionbt, err := transmissionrpc.New(cfg.TRRequestURL, cfg.TRUsername, cfg.TRPassword, &transmissionrpc.AdvancedConfig{
-			HTTPS: false,
-			Port:  cfg.TRRequestPort,
-		})
-		if err != nil {
-			log.Println(err)
-		}
-		base64Torrent := base64.StdEncoding.EncodeToString(input)
-		tr, err := transmissionbt.TorrentAdd(&transmissionrpc.TorrentAddPayload{
-			MetaInfo: &base64Torrent,
-			// DownloadDir: &cfg.TRFilePath,
-		})
-		if err != nil {
-			log.Println(err)
-		}
-		log.Println(tr)
 
-	}
-}
+//将种子发送到电报
 func sendTorrents(torrents *[]Torrent) {
 	for i, v := range *torrents {
 		if cfg.OnlyFree {
-			if !strings.Contains(v.Sales, "免费") || !strings.Contains(v.Sales, "Free") {
+			if !strings.Contains(v.Sales, "免费") && !strings.Contains(v.Sales, "Free") {
 				v.Update = true
 			}
 		}
-		if !v.Update || v.HasUp {
+		if !v.Update {
 			km := fmt.Sprintf("%s▽%s@CBD1|%s@CBD3,下载@CBD%s|%s@CBD21|移除@CBD4", v.Living, v.Size, v.Sales, v.URL, v.Four)
-			stat := ""
-			if v.Status != "" {
-				stat = "\n<b>" + v.Status + "</b>"
-				(*torrents)[i].Status = ""
-			}
-			torbot.sendMessage(chatID, v.Site+"〄"+v.Ttype+"▷"+v.Title1+"\n"+v.Title2+stat, HTML, InlineKM(km))
+			torbot.sendMessage(chatID, titleEscape(v), HTML, InlineKM(km))
 			log.Println(v.HasUp, v.Update, v.URL, v.Title1)
 			(*torrents)[i].Update = true
-			if len(v.URL) > 30 {
-				(*torrents)[i].HasUp = false
-			}
+			(*torrents)[i].Status = ""
 		}
 	}
 }
+
+func titleEscape(t Torrent) string {
+	stat := ""
+	if t.Status != "" {
+		t.Status = strings.Replace(t.Status, "<", "", 1)
+		stat = "<b>" + t.Status + "</b>"
+	}
+	title := cfg.TitleStyle
+	title = strings.Replace(title, "$Site", t.Site, -1)
+	title = strings.Replace(title, "$Type", t.Ttype, -1)
+	title = strings.Replace(title, "$Title1", t.Title1, -1)
+	title = strings.Replace(title, "$Title2", t.Title2, -1)
+	title = strings.Replace(title, "$Change", "\n"+stat, -1)
+	title = strings.Replace(title, "$change", stat, -1)
+	title = strings.Replace(title, "$Living", t.Living, -1)
+	title = strings.Replace(title, "$Size", t.Size, -1)
+	title = strings.Replace(title, "$Sales", t.Sales, -1)
+	title = strings.Replace(title, "$Four", t.Four, -1)
+	title = strings.Replace(title, "$URL", t.URL, -1)
+	title = strings.Replace(title, "\\n", "\n", -1)
+	return title
+}
+
+//对比两次获得的页面是否有变动,修改标记是否发送
 func checkUpdate(tlist *[]Torrent, oldlist *[]Torrent) {
 	for _, oldt := range *oldlist {
 		for j, newt := range *tlist {
-			if newt.URL == oldt.URL && len(oldt.URL) > 30 {
-				log.Println(oldt.URL)
+			if newt.URL == oldt.URL && len(newt.URL) > 30 {
 				if strings.Split(newt.Sales, "△")[0] != strings.Split(oldt.Sales, "△")[0] {
 					(*tlist)[j].Status = oldt.Sales + "==>" + newt.Sales
 					(*tlist)[j].Update = false
-				} else if len(oldt.URL) < 30 {
-					(*tlist)[j].HasUp = true
 				} else {
 					(*tlist)[j].Update = true
 				}
-			} else if len(newt.URL) < 30 {
-				(*tlist)[j].HasUp = true
+			}
+			if len(newt.URL) < 30 {
+				(*tlist)[j].Update = true
 			}
 		}
 	}
 }
+
 func checkMoeCat() {
-	log.Println("check MoeCat")
-	if cfg.MoeCatUsername != "" {
-		tlist := getTorMoeCat()
+	if cfg.MoeCatUsername != "" || cfg.MoeCatCookies != "" {
+		log.Println("check MoeCat")
+		tlist := getMoeCat()
 		checkUpdate(&tlist, &MoeCatTorList)
 		sendTorrents(&tlist)
 		MoeCatTorList = tlist
 	}
 }
 func checkPTHome() {
-	log.Println("check PTHome")
-	if cfg.PTHomeUsername != "" {
+	if cfg.PTHomeUsername != "" || cfg.PTHomeCookies != "" {
+		log.Println("check PTHome")
 		tlist := getPTHome()
 		checkUpdate(&tlist, &PTHomeTorList)
 		sendTorrents(&tlist)
@@ -237,17 +345,55 @@ func checkPTHome() {
 	}
 }
 func checkPTer() {
-	log.Println("check PTer")
-	if cfg.PTerUsername != "" {
+	if cfg.PTerUsername != "" || cfg.PTerCookies != "" {
+		log.Println("check PTer")
 		tlist := getPTer()
 		checkUpdate(&tlist, &PTerTorList)
 		sendTorrents(&tlist)
 		PTerTorList = tlist
 	}
 }
+func checkHDStreet() {
+	if cfg.HDStreetUsername != "" || cfg.HDStreetCookies != "" {
+		log.Println("check HDStreet")
+		tlist := getHDStreet()
+		checkUpdate(&tlist, &HDStreetList)
+		sendTorrents(&tlist)
+		HDStreetList = tlist
+	}
+}
+func checkCHDBits() {
+	if cfg.CHDBitsUsername != "" || cfg.CHDBitsCookies != "" {
+		log.Println("check CHDBits")
+		tlist := getCHDBits()
+		checkUpdate(&tlist, &CHDBitsList)
+		sendTorrents(&tlist)
+		CHDBitsList = tlist
+	}
+}
+func checkOurBits() {
+	if cfg.OurBitsUsername != "" || cfg.OurBitsCookies != "" {
+		log.Println("check OurBits")
+		tlist := getOurBits()
+		checkUpdate(&tlist, &OurBitsList)
+		sendTorrents(&tlist)
+		OurBitsList = tlist
+	}
+}
+func checkHDSky() {
+	if cfg.HDSkyUsername != "" || cfg.HDSkyCookies != "" {
+		log.Println("check HDSky")
+		tlist := getHDSkey()
+		checkUpdate(&tlist, &HDSkyList)
+		sendTorrents(&tlist)
+		HDSkyList = tlist
+	}
+}
+
+//定时运行检查
 func checkAll() {
 	log.Println("start checkall")
-	d := time.Duration(time.Minute * 15)
+	d := time.Duration(time.Minute * 10)
 	t := time.NewTicker(d)
 	defer t.Stop()
 	defer log.Println("chackAll 函数退出")
@@ -256,6 +402,10 @@ func checkAll() {
 		checkMoeCat()
 		checkPTHome()
 		checkPTer()
+		checkHDStreet()
+		checkCHDBits()
+		checkOurBits()
+		checkHDSky()
 		log.Println("check   OK")
 	}
 }

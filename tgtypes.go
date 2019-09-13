@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/technoweenie/multipartstreamer"
 )
@@ -176,18 +177,26 @@ func parseArg(arg []string) string {
 //HTML|Markdown   parse_mode
 //Mute    NoPreview    REPLY(id) ReplyKN()
 func (bot *BotAPI) sendMessage(chatID int64, text string, arg ...string) {
-	msg := fmt.Sprintf(`?chat_id=%d&text=%s`, chatID, url.QueryEscape(text)) + parseArg(arg)
-	resp, err := rq.Post("https://api.telegram.org/bot" + bot.API + "/sendMessage" + msg)
-	if err != nil {
-		log.Println(err)
-	}
-	hh, err := resp.ToString()
-	if err != nil {
-		log.Println(err)
-	}
-	if strings.Contains(hh, "false") {
-		log.Println(resp.ToString())
-		log.Println(msg)
+	for goon:=3; goon > 0; goon-- {
+
+		msg := fmt.Sprintf(`?chat_id=%d&text=%s`, chatID, url.QueryEscape(text)) + parseArg(arg)
+		resp, err := rq.Post("https://api.telegram.org/bot" + bot.API + "/sendMessage" + msg)
+		if err != nil {
+			log.Println(err)
+			time.Sleep(time.Duration(30) * time.Second)
+			continue
+		}
+		hh, err := resp.ToString()
+		if err != nil {
+			log.Println(err)
+			time.Sleep(time.Duration(1) * time.Minute)
+			continue
+		}
+		if strings.Contains(hh, "false") {
+			log.Println(resp.ToString())
+			log.Println(msg)
+		}
+		goon = 0
 	}
 }
 func (bot *BotAPI) deleteMessage(chatID int64, msgID int) {
@@ -195,9 +204,9 @@ func (bot *BotAPI) deleteMessage(chatID int64, msgID int) {
 	resp, err := rq.Post("https://api.telegram.org/bot" + bot.API + "/deleteMessage" + msg)
 	html, err := resp.ToString()
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
-	fmt.Println(html)
+	log.Println(html)
 }
 func (bot *BotAPI) editMessageText(chatID int64, msgID int, text string, arg ...string) {
 	msg := fmt.Sprintf(`?text=%s&chat_id=%d&message_id=%d`, url.QueryEscape(text), chatID, msgID) + parseArg(arg)
