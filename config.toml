@@ -76,17 +76,28 @@ SSDUsername=''
 SSDPassword=''
 SSDCookies=''
 
-#NASA 账户配置，不想监听请留空
-NASAUsername=''
-NASAPassword=''
-NASACookies=''
+#Frds 账户配置，不想监听请留空,暂时只支持Cookie
+# FrdsUsername=''
+# FrdsPassword=''
+FrdsCookies=''
+# FrdsVerify=false
 
-#OpenCD 账户配置，不想监听请留空
+#MTeam 账户配置，不想监听请留空,暂时只支持Cookie
+# MTUsername=''
+# MTPassword=''
+MTCookies=''
+MTVerify=true        #是否开启两步验证
+MTTrackerSSL=true    #是否使用ssl  tracker
+MTTrackerIPv6=true   #是否使用ipv6 tracker
+
+#OpenCD 账户配置，不想监听请留空,暂未支持
 OpenCDUsername=''
 OpenCDPassword=''
 OpenCDCookies=''
+OpenCDSSL=true
+OpenCDTrackerSSL=true
 
-#HDHome 账户配置，不想监听请留空
+#HDHome 账户配置，不想监听请留空,暂未支持
 HDHomeUsername=''
 HDHomePassword=''
 HDHomeCookies=''

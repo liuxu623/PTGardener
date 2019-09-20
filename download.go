@@ -33,6 +33,15 @@ var OurBitsPasskey string
 //HDSkyPasskey is
 var HDSkyPasskey string
 
+// SSDPasskey is
+var SSDPasskey string
+
+// FrdsPasskey is
+var FrdsPasskey string
+
+// MTPasskey is
+var MTPasskey string
+
 func downloadTorrent(URL string) {
 	log.Println(URL)
 	var passkey string
@@ -171,6 +180,82 @@ func downloadTorrent(URL string) {
 			})
 		}
 		passkey = HDSkyPasskey
+	}
+	if strings.Contains(URL, "springsunday.net") {
+		if SSDPasskey == "" {
+			header := req.Header{
+				"cookie": cfg.SSDCookies,
+			}
+			respp, err := r.Get("https://springsunday.net/usercp.php", header)
+			if err != nil {
+				log.Println(err)
+				log.Println("Get SSD Usercp Failed")
+			}
+			doc, err := goquery.NewDocumentFromResponse(respp.Response())
+			doc.Find("tr").Each(func(i int, s *goquery.Selection) {
+				if s.Find("td").Eq(0).Text() == "密钥" {
+					SSDPasskey = s.Find("td").Eq(1).Text()
+				}
+			})
+		}
+		passkey = SSDPasskey
+	}
+	if strings.Contains(URL, "keepfrds.com") {
+		if FrdsPasskey == "" {
+			header := req.Header{
+				"cookie": cfg.FrdsCookies,
+			}
+			respp, err := r.Get("https://pt.keepfrds.com/usercp.php", header)
+			if err != nil {
+				log.Println(err)
+				log.Println("Get Frds Usercp Failed")
+			}
+			doc, err := goquery.NewDocumentFromResponse(respp.Response())
+			doc.Find("tr").Each(func(i int, s *goquery.Selection) {
+				if s.Find("td").Eq(0).Text() == "密钥" {
+					FrdsPasskey = s.Find("td").Eq(1).Text()
+				}
+			})
+		}
+		passkey = FrdsPasskey
+	}
+	if strings.Contains(URL, "m-team.cc") {
+		if MTPasskey == "" {
+			header := req.Header{
+				"Accept":                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
+				"Accept-Encoding":           "gzip, deflate, br",
+				"Accept-Language":           "zh-CN,zh;q=0.9,zh-TW;q=0.8",
+				"Cache-Control":             "max-age=0",
+				"Connection":                "keep-alive",
+				"Cookie":                    cfg.MTCookies,
+				"DNT":                       "1",
+				"Host":                      "pt.m-team.cc",
+				"Referer":                   "https://pt.m-team.cc/torrents.php",
+				"Sec-Fetch-Mode":            "navigate",
+				"Sec-Fetch-Site":            "none",
+				"Sec-Fetch-User":            "?1",
+				"Upgrade-Insecure-Requests": "1",
+				"User-Agent":                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+			}
+			respp, err := r.Get("https://pt.m-team.cc/usercp.php", header)
+			if err != nil {
+				log.Println(err)
+				log.Println("Get MTeam Usercp Failed")
+			}
+			doc, err := goquery.NewDocumentFromResponse(respp.Response())
+			doc.Find("tr").Each(func(i int, s *goquery.Selection) {
+				if s.Find("td").Eq(0).Text() == "密匙" {
+					MTPasskey = s.Find("td").Eq(1).Text()
+					if cfg.MTTrackerIPv6 {
+						MTPasskey += "&ipv6=1"
+					}
+					if cfg.MTTrackerSSL {
+						MTPasskey += "&https=1"
+					}
+				}
+			})
+		}
+		passkey = MTPasskey
 	}
 	if cfg.DownloadMode == 1 {
 		//input, _ := resp.ToBytes()

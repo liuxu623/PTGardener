@@ -34,10 +34,14 @@ func getMoeCat() []Torrent {
 			"cookie":     cfg.MoeCatCookies,
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 		}
+		req.SetTimeout(30 * time.Second)
 		resp, err := r.Get("https://www.moecat.best/torrents.php", header)
 		if err != nil {
 			log.Println(err)
 			time.Sleep(time.Duration(10) * time.Second)
+			if goon == 1 {
+				return torrentList
+			}
 			continue
 		}
 		doc, err := goquery.NewDocumentFromResponse(resp.Response())
@@ -110,10 +114,14 @@ func getPTHome() []Torrent {
 			"cookie":     cfg.PTHomeCookies,
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 		}
+		req.SetTimeout(30 * time.Second)
 		resp, err := r.Get("https://www.pthome.net/torrents.php", header)
 		if err != nil {
 			log.Println(err)
 			time.Sleep(time.Duration(10) * time.Second)
+			if goon == 1 {
+				return torrentList
+			}
 			continue
 		}
 		doc, err := goquery.NewDocumentFromResponse(resp.Response())
@@ -197,15 +205,24 @@ func getPTer() []Torrent {
 			"cookie":     cfg.PTerCookies,
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 		}
+		req.SetTimeout(30 * time.Second)
 		resp, err := r.Get("https://pter.club/torrents.php", header)
 		if err != nil {
 			log.Println(err)
 			time.Sleep(time.Duration(10) * time.Second)
+			if goon == 1 {
+				return torrentList
+			}
 			continue
 		}
 		doc, err := goquery.NewDocumentFromResponse(resp.Response())
 		if err != nil {
 			log.Println(err)
+			time.Sleep(time.Duration(10) * time.Second)
+			if goon == 1 {
+				return torrentList
+			}
+			continue
 		}
 		var torrent Torrent
 		doc.Find("table.torrents tbody tr").Each(func(i int, s *goquery.Selection) {
@@ -315,7 +332,6 @@ func getPTer() []Torrent {
 	return torrentList
 }
 func getHDStreet() []Torrent {
-	log.Println("================check start==============")
 	var torrentList []Torrent
 	for goon := 3; goon > 0; goon-- {
 		headers := req.Header{
@@ -323,10 +339,14 @@ func getHDStreet() []Torrent {
 			"Referer":    "https://hdstreet.club/index.php",
 			"cookie":     cfg.HDStreetCookies,
 		}
+		req.SetTimeout(30 * time.Second)
 		resp, err := r.Get("https://hdstreet.club/torrents.php", headers)
 		if err != nil {
 			log.Println(err)
 			time.Sleep(time.Duration(10) * time.Second)
+			if goon == 1 {
+				return torrentList
+			}
 			continue
 		}
 		doc, err := goquery.NewDocumentFromResponse(resp.Response())
@@ -400,6 +420,9 @@ func getHDStreet() []Torrent {
 		if err != nil {
 			log.Println(err)
 			time.Sleep(time.Duration(10) * time.Second)
+			if goon == 1 {
+				return torrentList
+			}
 			continue
 		}
 		doc, err := goquery.NewDocumentFromResponse(resp.Response())
@@ -463,9 +486,9 @@ func getHDStreet() []Torrent {
 		})
 		goon = 0
 	}
-	for _, v := range torrentList {
-		log.Println(v.URL)
-	}
+	// for _, v := range torrentList {
+	// log.Println(v.URL)
+	// }
 	return torrentList
 }
 func getCHDBits() []Torrent {
@@ -475,10 +498,14 @@ func getCHDBits() []Torrent {
 			"cookie":     cfg.CHDBitsCookies,
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 		}
+		req.SetTimeout(30 * time.Second)
 		resp, err := r.Get("https://chdbits.co/torrents.php", header)
 		if err != nil {
 			log.Println(err)
 			time.Sleep(time.Duration(10) * time.Second)
+			if goon == 1 {
+				return torrentList
+			}
 			continue
 		}
 		doc, err := goquery.NewDocumentFromResponse(resp.Response())
@@ -562,10 +589,14 @@ func getOurBits() []Torrent {
 			"cookie":     cfg.OurBitsCookies,
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 		}
+		req.SetTimeout(30 * time.Second)
 		resp, err := r.Get("https://ourbits.club/torrents.php", header)
 		if err != nil {
 			log.Println(err)
 			time.Sleep(time.Duration(10) * time.Second)
+			if goon == 1 {
+				return torrentList
+			}
 			continue
 		}
 		doc, err := goquery.NewDocumentFromResponse(resp.Response())
@@ -643,7 +674,6 @@ func getOurBits() []Torrent {
 		goon = 0
 	}
 	return torrentList
-
 }
 func getHDSkey() []Torrent {
 	var torrentList []Torrent
@@ -652,10 +682,14 @@ func getHDSkey() []Torrent {
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 			"cookie":     cfg.HDSkyCookies,
 		}
+		req.SetTimeout(30 * time.Second)
 		resp, err := r.Get("https://hdsky.me/torrents.php", header)
 		if err != nil {
 			log.Println(err)
 			time.Sleep(time.Duration(10) * time.Second)
+			if goon == 1 {
+				return torrentList
+			}
 			continue
 		}
 		doc, err := goquery.NewDocumentFromResponse(resp.Response())
@@ -731,6 +765,9 @@ func getHDSkey() []Torrent {
 		})
 		goon = 0
 	}
+	// if len(torrentList)==0{
+	// 	torbot.sendMessage(chatID,"")
+	// }
 	return torrentList
 }
 func getSSD() []Torrent {
@@ -740,10 +777,14 @@ func getSSD() []Torrent {
 			"cookie":     cfg.SSDCookies,
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 		}
+		req.SetTimeout(30 * time.Second)
 		resp, err := r.Get("https://springsunday.net/torrents.php", header)
 		if err != nil {
 			log.Println(err)
 			time.Sleep(time.Duration(10) * time.Second)
+			if goon == 1 {
+				return torrentList
+			}
 			continue
 		}
 		doc, err := goquery.NewDocumentFromResponse(resp.Response())
@@ -758,21 +799,218 @@ func getSSD() []Torrent {
 						s.Find("img").Each(func(i int, s *goquery.Selection) {
 							if i == 0 {
 								torrent.Ttype, _ = s.Attr("title")
-								torrent.Ttype = strings.Split(torrent.Ttype, "(")[1]
-								torrent.Ttype = strings.Replace(torrent.Ttype, ")", "", -1)
+								// torrent.Ttype = strings.Split(torrent.Ttype, "(")[1]
+								// torrent.Ttype = strings.Replace(torrent.Ttype, ")", "", -1)
 							}
 						})
-						torrent.Site = "PTer"
+						torrent.Site = "SSD"
 					}
 					if i == 2 {
 						torrent.Title1 = s.Find("a").Eq(0).Text()
 						torrent.Title1 = strings.Replace(torrent.Title1, "[email protected]", "", -1)
-						torrent.Sales, _ = s.Find("a").Eq(1).Find("img").Attr("alt")
+						s.Find("img").Each(func(i int, s *goquery.Selection) {
+							alt, _ := s.Attr("alt")
+							if alt != "Super" && alt != "Sticky" {
+								torrent.Sales = alt
+							}
+						})
 						torrent.Sales += "△"
 						salestime := s.Find("span").Text()
 						if torrent.Sales == "△" {
 							torrent.Sales = "无优惠"
 						}
+						if strings.Contains(salestime, "[email") {
+							torrent.Sales += strings.Split(salestime, "]")[1]
+						} else {
+							torrent.Sales += salestime
+						}
+						s.Find("a").Eq(0).Remove()
+						s.Find("span").Remove()
+						s.Find("b").Remove()
+						cc := s.Text()
+						cc = strings.Replace(cc, "剩余时间：", "", -1)
+						cc = strings.TrimSpace(cc)
+						torrent.Title2 = cc
+					}
+					if i == 3 {
+						s.Find("a").Each(func(i int, s *goquery.Selection) {
+							alt, ok := s.Find("img").Attr("alt")
+							if ok {
+								if alt == "download" {
+									href, _ := s.Attr("href")
+									torrent.URL = "https://springsunday.net/" + href
+								}
+							}
+						})
+					}
+					if i == 5 {
+						torrent.Living = s.Text()
+					}
+					if i == 6 {
+						torrent.Size = s.Text()
+					}
+					if i == 7 {
+						torrent.Four = "↑" + s.Text()
+					}
+					if i == 8 {
+						torrent.Four += " ↓" + s.Text()
+					}
+					if i == 9 {
+						torrent.Four += " ✓" + s.Text()
+						torrentList = append(torrentList, torrent)
+					}
+				})
+			}
+		})
+		goon = 0
+	}
+	return torrentList
+}
+func getFrds() []Torrent {
+	var torrentList []Torrent
+	for goon := 3; goon > 0; goon-- {
+		header := req.Header{
+			"cookie":     cfg.FrdsCookies,
+			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+		}
+		req.SetTimeout(30 * time.Second)
+		resp, err := r.Get("https://pt.keepfrds.com/torrents.php", header)
+		if err != nil {
+			log.Println(err)
+			time.Sleep(time.Duration(10) * time.Second)
+			if goon == 1 {
+				return torrentList
+			}
+			continue
+		}
+		doc, err := goquery.NewDocumentFromResponse(resp.Response())
+		if err != nil {
+			log.Println(err)
+		}
+		var torrent Torrent
+		doc.Find("table.torrents tbody tr").Each(func(i int, s *goquery.Selection) {
+			if i != 0 {
+				s.Find("td").Each(func(i int, s *goquery.Selection) {
+					if i == 0 {
+						s.Find("img").Each(func(i int, s *goquery.Selection) {
+							if i == 0 {
+								torrent.Ttype, _ = s.Attr("title")
+							}
+						})
+						torrent.Site = "Frds"
+					}
+					if i == 2 {
+						torrent.Title1 = s.Find("a").Eq(0).Text()
+						torrent.Title1 = strings.Replace(torrent.Title1, "[email protected]", "", -1)
+						s.Find("a").Eq(0).Remove()
+						s.Find("span").Remove()
+						s.Find("b").Remove()
+						cc := s.Text()
+						cc = strings.Replace(cc, "剩余时间：", "", -1)
+						cc = strings.TrimSpace(cc)
+						torrent.Title2 = cc
+					}
+					if i == 3 {
+						torrent.URL, _ = s.Find("div").Eq(0).Find("a").Attr("href")
+						torrent.URL = "https://pt.keepfrds.com/" + torrent.URL
+						s.Find("div").Eq(1).Find("img").Each(func(i int, s *goquery.Selection) {
+							alt, ok := s.Attr("title")
+							if ok {
+								if alt != "收藏" {
+									torrent.Sales = alt
+								}
+							}
+						})
+					}
+					if i == 5 {
+						torrent.Living = s.Text()
+					}
+					if i == 6 {
+						torrent.Size = s.Text()
+					}
+					if i == 7 {
+						torrent.Four = "↑" + s.Text()
+					}
+					if i == 8 {
+						torrent.Four += " ↓" + s.Text()
+					}
+					if i == 9 {
+						torrent.Four += " ✓" + s.Text()
+						torrentList = append(torrentList, torrent)
+					}
+				})
+			}
+		})
+		goon = 0
+	}
+	return torrentList
+}
+func getMT() []Torrent {
+	var torrentList []Torrent
+	for goon := 3; goon > 0; goon-- {
+		header := req.Header{
+			"Host":                      "pt.m-team.cc",
+			"Connection":                "keep-alive",
+			"Cache-Control":             "max-age=0",
+			"Upgrade-Insecure-Requests": "1",
+			"User-Agent":                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+			"Sec-Fetch-Mode":            "navigate",
+			"Sec-Fetch-User":            "?1",
+			// "DNT":                       "1",
+			// "Accept":                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
+			"Sec-Fetch-Site":  "none",
+			"Referer":         "https://pt.m-team.cc/index.php",
+			"Accept-Encoding": "gzip, deflate, br",
+			// "Accept-Language":           "zh-CN,zh;q=0.9,zh-TW;q=0.8",
+			"cookie": cfg.MTCookies,
+		}
+		req.SetTimeout(30 * time.Second)
+		resp, err := r.Get("https://pt.m-team.cc/torrents.php", header)
+		if err != nil {
+			log.Println(err)
+			time.Sleep(time.Duration(10) * time.Second)
+			if goon == 1 {
+				return torrentList
+			}
+			continue
+		}
+		doc, err := goquery.NewDocumentFromResponse(resp.Response())
+		if err != nil {
+			log.Println(err)
+		}
+		for vvv := 3; vvv > 0; vvv-- {
+			if strings.Contains(doc.Text(), "請輸入驗證器上顯示的6位元驗證碼") {
+				doc = MT2Verify(doc.Text())
+				if goon == 1 {
+					return torrentList
+				}
+				continue
+			}
+
+		}
+		var torrent Torrent
+		doc.Find("table.torrents tbody tr").Each(func(i int, s *goquery.Selection) {
+			if i != 0 {
+				s.Find("td").Each(func(i int, s *goquery.Selection) {
+					if i == 0 {
+						s.Find("img").Each(func(i int, s *goquery.Selection) {
+							if i == 0 {
+								torrent.Ttype, _ = s.Attr("title")
+								torrent.Ttype = strings.Split(torrent.Ttype, "(")[0]
+							}
+						})
+						torrent.Site = "MTeam"
+					}
+					if i == 3 {
+						torrent.Title1 = s.Find("a").Eq(0).Text()
+						torrent.Title1 = strings.Replace(torrent.Title1, "[email protected]", "", -1)
+						torrent.Sales, _ = s.Find("img[class^=pro_]").Attr("alt")
+						torrent.Sales += "△"
+						salestime := s.Find("span").Text()
+						if torrent.Sales == "△" {
+							torrent.Sales = "无优惠"
+						}
+						salestime = strings.Replace(salestime, "限時：", "", 1)
 						if strings.Contains(salestime, "[email") {
 							torrent.Sales += strings.Split(salestime, "]")[1]
 						} else {
@@ -792,25 +1030,125 @@ func getSSD() []Torrent {
 								if alt == "download" {
 									href, _ := s.Attr("href")
 									href = strings.Split(href, "&")[0]
-									torrent.URL = "https://pter.club/" + href
+									torrent.URL = "https://pt.m-team.cc/" + href
 								}
 							}
 						})
 					}
-					if i == 8 {
+					if i == 6 {
 						torrent.Living = s.Text()
 					}
-					if i == 9 {
+					if i == 7 {
 						torrent.Size = s.Text()
 					}
-					if i == 10 {
+					if i == 8 {
 						torrent.Four = "↑" + s.Text()
 					}
-					if i == 11 {
+					if i == 9 {
 						torrent.Four += " ↓" + s.Text()
 					}
-					if i == 12 {
+					if i == 10 {
 						torrent.Four += " ✓" + s.Text()
+						torrent.Four = strings.Replace(torrent.Four, ",", "%2C", -1)
+						torrentList = append(torrentList, torrent)
+					}
+				})
+			}
+		})
+		goon = 0
+	}
+	for goon := 3; goon > 0; goon-- {
+		header := req.Header{
+			"Host":                      "pt.m-team.cc",
+			"Connection":                "keep-alive",
+			"Cache-Control":             "max-age=0",
+			"Upgrade-Insecure-Requests": "1",
+			"User-Agent":                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+			"Sec-Fetch-Mode":            "navigate",
+			"Sec-Fetch-User":            "?1",
+			// "DNT":                       "1",
+			// "Accept":                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
+			"Sec-Fetch-Site":  "none",
+			"Referer":         "https://pt.m-team.cc/index.php",
+			"Accept-Encoding": "gzip, deflate, br",
+			// "Accept-Language":           "zh-CN,zh;q=0.9,zh-TW;q=0.8",
+			"cookie": cfg.MTCookies,
+		}
+		resp, err := r.Get("https://pt.m-team.cc/adult.php", header)
+		if err != nil {
+			log.Println(err)
+			time.Sleep(time.Duration(10) * time.Second)
+			if goon == 1 {
+				return torrentList
+			}
+			continue
+		}
+		doc, err := goquery.NewDocumentFromResponse(resp.Response())
+		if err != nil {
+			log.Println(err)
+		}
+		var torrent Torrent
+		doc.Find("table.torrents tbody tr").Each(func(i int, s *goquery.Selection) {
+			if i != 0 {
+				s.Find("td").Each(func(i int, s *goquery.Selection) {
+					if i == 0 {
+						s.Find("img").Each(func(i int, s *goquery.Selection) {
+							if i == 0 {
+								torrent.Ttype, _ = s.Attr("title")
+								torrent.Ttype = strings.Split(torrent.Ttype, "(")[0]
+							}
+						})
+						torrent.Site = "MTeam"
+					}
+					if i == 3 {
+						torrent.Title1 = s.Find("a").Eq(0).Text()
+						torrent.Title1 = strings.Replace(torrent.Title1, "[email protected]", "", -1)
+						torrent.Sales, _ = s.Find("img[class^=pro_]").Attr("alt")
+						torrent.Sales += "△"
+						salestime := s.Find("span").Text()
+						if torrent.Sales == "△" {
+							torrent.Sales = "无优惠"
+						}
+						salestime = strings.Replace(salestime, "限時：", "", 1)
+						if strings.Contains(salestime, "[email") {
+							torrent.Sales += strings.Split(salestime, "]")[1]
+						} else {
+							torrent.Sales += salestime
+						}
+						s.Find("a").Eq(0).Remove()
+						s.Find("span").Remove()
+						cc := s.Text()
+						cc = strings.Replace(cc, "剩余时间：", "", -1)
+						cc = strings.TrimSpace(cc)
+						torrent.Title2 = cc
+					}
+					if i == 4 {
+						s.Find("a").Each(func(i int, s *goquery.Selection) {
+							alt, ok := s.Find("img").Attr("alt")
+							if ok {
+								if alt == "download" {
+									href, _ := s.Attr("href")
+									href = strings.Split(href, "&")[0]
+									torrent.URL = "https://pt.m-team.cc/" + href
+								}
+							}
+						})
+					}
+					if i == 6 {
+						torrent.Living = s.Text()
+					}
+					if i == 7 {
+						torrent.Size = s.Text()
+					}
+					if i == 8 {
+						torrent.Four = "↑" + s.Text()
+					}
+					if i == 9 {
+						torrent.Four += " ↓" + s.Text()
+					}
+					if i == 10 {
+						torrent.Four += " ✓" + s.Text()
+						torrent.Four = strings.Replace(torrent.Four, ",", "%2C", -1)
 						torrentList = append(torrentList, torrent)
 					}
 				})

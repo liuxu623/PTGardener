@@ -66,12 +66,21 @@ type Config struct {
 	SSDUsername      string
 	SSDPassword      string
 	SSDCookies       string
-	NASAUsername     string
-	NASAPassword     string
-	NASACookies      string
+	FrdsUsername     string
+	FrdsPassword     string
+	FrdsCookies      string
+	FrdsVerify       bool
+	MTUsername       string
+	MTPassword       string
+	MTCookies        string
+	MTVerify         bool
+	MTTrackerSSL     bool
+	MTTrackerIPv6    bool
 	OpenCDUsername   string
 	OpenCDPassword   string
 	OpenCDCookies    string
+	OpenCDSSL        bool
+	OpenCDTrackerSSL bool
 	HDHomeUsername   string
 	HDHomePassword   string
 	HDHomeCookies    string
@@ -96,6 +105,9 @@ var chanGoPTer = make(chan int, 1)
 var chanGoOurBits = make(chan int, 1)
 var chanGoHDSky = make(chan int, 1)
 var chanGoSSD = make(chan int, 1)
+var chanGoFrds = make(chan int, 1)
+var chanGoOpenCD = make(chan int, 1)
+var chanGoMT = make(chan int, 1)
 
 //MoeCatTorList is
 var MoeCatTorList []Torrent
@@ -120,6 +132,15 @@ var HDSkyList []Torrent
 
 // SSDList is
 var SSDList []Torrent
+
+// FrdsList is
+var FrdsList []Torrent
+
+// OpenCDList is
+var OpenCDList []Torrent
+
+// MTList is
+var MTList []Torrent
 
 func main() {
 	if _, err := toml.DecodeFile("./config.toml", &cfg); err != nil {
@@ -202,44 +223,24 @@ func torBotOperator() {
 				}
 				if cfg.HDSkyUsername != "" || cfg.HDSkyCookies != "" {
 					go loginHDSky(cfg.HDSkyUsername, cfg.HDSkyPassword)
+				} else {
+					chanGoSSD <- 1
+				}
+				if cfg.SSDUsername != "" || cfg.SSDCookies != "" {
+					go loginSSD(cfg.SSDUsername, cfg.SSDPassword)
+				}
+				if cfg.FrdsUsername != "" || cfg.FrdsCookies != "" {
+					go loginFrds(cfg.FrdsUsername, cfg.FrdsPassword)
+				}
+				if cfg.MTUsername != "" || cfg.MTCookies != "" {
+					go loginMT(cfg.MTUsername, cfg.MTPassword)
 				}
 
 				go loginDone()
 			}
 			if u.Message.Text == "/get" {
 				if chatID != 0 {
-					if cfg.HDStreetUsername != "" || cfg.HDStreetCookies != "" {
-						HDStreetList = getHDStreet()
-					}
-					if cfg.MoeCatUsername != "" || cfg.MoeCatCookies != "" {
-						MoeCatTorList = getMoeCat()
-					}
-					if cfg.PTHomeUsername != "" || cfg.PTHomeCookies != "" {
-						PTHomeTorList = getPTHome()
-					}
-					if cfg.PTerUsername != "" || cfg.PTerCookies != "" {
-						PTerTorList = getPTer()
-					}
-					if cfg.CHDBitsUsername != "" || cfg.CHDBitsCookies != "" {
-						CHDBitsList = getCHDBits()
-					}
-					if cfg.OurBitsUsername != "" || cfg.OurBitsCookies != "" {
-						OurBitsList = getOurBits()
-					}
-					if cfg.HDSkyUsername != "" || cfg.HDSkyCookies != "" {
-						HDSkyList = getHDSkey()
-					}
-					if cfg.FirstSend {
-						sendTorrents(&MoeCatTorList)
-						sendTorrents(&PTHomeTorList)
-						sendTorrents(&PTerTorList)
-						sendTorrents(&HDStreetList)
-						sendTorrents(&CHDBitsList)
-						sendTorrents(&OurBitsList)
-						sendTorrents(&HDSkyList)
-						cfg.FirstSend = false
-					}
-					go checkAll()
+					go getAll()
 				} else {
 					torbot.sendMessage(u.Message.Chat.ID, "请先输入设定的BotSecret,然后按照提示登录账号")
 					firstMsgCount--
@@ -277,7 +278,7 @@ func sendTorrents(torrents *[]Torrent) {
 		}
 		if !v.Update {
 			km := fmt.Sprintf("%s▽%s@CBD1|%s@CBD3,下载@CBD%s|%s@CBD21|移除@CBD4", v.Living, v.Size, v.Sales, v.URL, v.Four)
-			torbot.sendMessage(chatID, titleEscape(v), HTML, InlineKM(km))
+			torbot.sendMessage(chatID, titleEscape(v), HTML, NoPreView, InlineKM(km))
 			log.Println(v.HasUp, v.Update, v.URL, v.Title1)
 			(*torrents)[i].Update = true
 			(*torrents)[i].Status = ""
@@ -330,63 +331,110 @@ func checkMoeCat() {
 	if cfg.MoeCatUsername != "" || cfg.MoeCatCookies != "" {
 		log.Println("check MoeCat")
 		tlist := getMoeCat()
-		checkUpdate(&tlist, &MoeCatTorList)
-		sendTorrents(&tlist)
-		MoeCatTorList = tlist
+		if len(tlist) != 0 {
+			checkUpdate(&tlist, &MoeCatTorList)
+			sendTorrents(&tlist)
+			MoeCatTorList = tlist
+		}
 	}
 }
 func checkPTHome() {
 	if cfg.PTHomeUsername != "" || cfg.PTHomeCookies != "" {
 		log.Println("check PTHome")
 		tlist := getPTHome()
-		checkUpdate(&tlist, &PTHomeTorList)
-		sendTorrents(&tlist)
-		PTHomeTorList = tlist
+		if len(tlist) != 0 {
+			checkUpdate(&tlist, &PTHomeTorList)
+			sendTorrents(&tlist)
+			PTHomeTorList = tlist
+		}
 	}
 }
 func checkPTer() {
 	if cfg.PTerUsername != "" || cfg.PTerCookies != "" {
 		log.Println("check PTer")
 		tlist := getPTer()
-		checkUpdate(&tlist, &PTerTorList)
-		sendTorrents(&tlist)
-		PTerTorList = tlist
+		if len(tlist) != 0 {
+			checkUpdate(&tlist, &PTerTorList)
+			sendTorrents(&tlist)
+			PTerTorList = tlist
+		}
 	}
 }
 func checkHDStreet() {
 	if cfg.HDStreetUsername != "" || cfg.HDStreetCookies != "" {
 		log.Println("check HDStreet")
 		tlist := getHDStreet()
-		checkUpdate(&tlist, &HDStreetList)
-		sendTorrents(&tlist)
-		HDStreetList = tlist
+		if len(tlist) != 0 {
+			checkUpdate(&tlist, &HDStreetList)
+			sendTorrents(&tlist)
+			HDStreetList = tlist
+		}
 	}
 }
 func checkCHDBits() {
 	if cfg.CHDBitsUsername != "" || cfg.CHDBitsCookies != "" {
 		log.Println("check CHDBits")
 		tlist := getCHDBits()
-		checkUpdate(&tlist, &CHDBitsList)
-		sendTorrents(&tlist)
-		CHDBitsList = tlist
+		if len(tlist) != 0 {
+			checkUpdate(&tlist, &CHDBitsList)
+			sendTorrents(&tlist)
+			CHDBitsList = tlist
+		}
 	}
 }
 func checkOurBits() {
 	if cfg.OurBitsUsername != "" || cfg.OurBitsCookies != "" {
 		log.Println("check OurBits")
 		tlist := getOurBits()
-		checkUpdate(&tlist, &OurBitsList)
-		sendTorrents(&tlist)
-		OurBitsList = tlist
+		if len(tlist) != 0 {
+			checkUpdate(&tlist, &OurBitsList)
+			sendTorrents(&tlist)
+			OurBitsList = tlist
+		}
 	}
 }
 func checkHDSky() {
 	if cfg.HDSkyUsername != "" || cfg.HDSkyCookies != "" {
 		log.Println("check HDSky")
 		tlist := getHDSkey()
-		checkUpdate(&tlist, &HDSkyList)
-		sendTorrents(&tlist)
-		HDSkyList = tlist
+		if len(tlist) != 0 {
+			checkUpdate(&tlist, &HDSkyList)
+			sendTorrents(&tlist)
+			HDSkyList = tlist
+		}
+	}
+}
+func checkSSD() {
+	if cfg.SSDUsername != "" || cfg.SSDCookies != "" {
+		log.Println("check SSD")
+		tlist := getSSD()
+		if len(tlist) != 0 {
+			checkUpdate(&tlist, &SSDList)
+			sendTorrents(&tlist)
+			SSDList = tlist
+		}
+	}
+}
+func checkFrds() {
+	if cfg.FrdsUsername != "" || cfg.FrdsCookies != "" {
+		log.Println("check Frds")
+		tlist := getFrds()
+		if len(tlist) != 0 {
+			checkUpdate(&tlist, &FrdsList)
+			sendTorrents(&tlist)
+			FrdsList = tlist
+		}
+	}
+}
+func checkMT() {
+	if cfg.MTUsername != "" || cfg.MTCookies != "" {
+		log.Println("check MTeam")
+		tlist := getMT()
+		if len(tlist) != 0 {
+			checkUpdate(&tlist, &MTList)
+			sendTorrents(&tlist)
+			MTList = tlist
+		}
 	}
 }
 
@@ -406,6 +454,55 @@ func checkAll() {
 		checkCHDBits()
 		checkOurBits()
 		checkHDSky()
+		checkSSD()
+		checkFrds()
+		checkMT()
 		log.Println("check   OK")
 	}
+}
+func getAll() {
+	if cfg.HDStreetUsername != "" || cfg.HDStreetCookies != "" {
+		HDStreetList = getHDStreet()
+	}
+	if cfg.MoeCatUsername != "" || cfg.MoeCatCookies != "" {
+		MoeCatTorList = getMoeCat()
+	}
+	if cfg.PTHomeUsername != "" || cfg.PTHomeCookies != "" {
+		PTHomeTorList = getPTHome()
+	}
+	if cfg.PTerUsername != "" || cfg.PTerCookies != "" {
+		PTerTorList = getPTer()
+	}
+	if cfg.CHDBitsUsername != "" || cfg.CHDBitsCookies != "" {
+		CHDBitsList = getCHDBits()
+	}
+	if cfg.OurBitsUsername != "" || cfg.OurBitsCookies != "" {
+		OurBitsList = getOurBits()
+	}
+	if cfg.HDSkyUsername != "" || cfg.HDSkyCookies != "" {
+		HDSkyList = getHDSkey()
+	}
+	if cfg.SSDUsername != "" || cfg.SSDCookies != "" {
+		SSDList = getSSD()
+	}
+	if cfg.FrdsUsername != "" || cfg.FrdsCookies != "" {
+		FrdsList = getFrds()
+	}
+	if cfg.MTUsername != "" || cfg.MTCookies != "" {
+		MTList = getMT()
+	}
+	if cfg.FirstSend {
+		sendTorrents(&MoeCatTorList)
+		sendTorrents(&PTHomeTorList)
+		sendTorrents(&PTerTorList)
+		sendTorrents(&HDStreetList)
+		sendTorrents(&CHDBitsList)
+		sendTorrents(&OurBitsList)
+		sendTorrents(&HDSkyList)
+		sendTorrents(&SSDList)
+		sendTorrents(&FrdsList)
+		sendTorrents(&MTList)
+		cfg.FirstSend = false
+	}
+	go checkAll()
 }

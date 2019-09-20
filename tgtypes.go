@@ -177,7 +177,7 @@ func parseArg(arg []string) string {
 //HTML|Markdown   parse_mode
 //Mute    NoPreview    REPLY(id) ReplyKN()
 func (bot *BotAPI) sendMessage(chatID int64, text string, arg ...string) {
-	for goon:=3; goon > 0; goon-- {
+	for goon := 3; goon > 0; goon-- {
 
 		msg := fmt.Sprintf(`?chat_id=%d&text=%s`, chatID, url.QueryEscape(text)) + parseArg(arg)
 		resp, err := rq.Post("https://api.telegram.org/bot" + bot.API + "/sendMessage" + msg)
