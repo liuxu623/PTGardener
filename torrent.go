@@ -162,6 +162,7 @@ func getPTHome() []Torrent {
 						s.Find("td").Each(func(i int, s *goquery.Selection) {
 							if i == 0 {
 								torrent.Title1 = strings.TrimSpace(s.Find("a").Text())
+								torrent.Title1 = strings.Replace(torrent.Title1, "[email protected]", "", -1)
 								s.Find("a").Remove()
 								s.Find("b").Remove()
 								cc := s.Text()
@@ -339,7 +340,7 @@ func getHDStreet() []Torrent {
 			"Referer":    "https://hdstreet.club/index.php",
 			"cookie":     cfg.HDStreetCookies,
 		}
-		req.SetTimeout(30 * time.Second)
+		req.SetTimeout(60 * time.Second)
 		resp, err := r.Get("https://hdstreet.club/torrents.php", headers)
 		if err != nil {
 			log.Println(err)

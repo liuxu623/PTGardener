@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -33,6 +34,7 @@ type Config struct {
 	TRPassword       string
 	TRRequestURL     string
 	TRRequestPort    uint16
+	TrReannounce     int64
 	QBUsername       string
 	QBPassword       string
 	QBRequestURL     string
@@ -150,6 +152,9 @@ func main() {
 		rq.SetProxyUrl(cfg.ProxyURL)
 	}
 	go torBotOperator()
+	if cfg.TrReannounce != 0 {
+		go TrReannounce(cfg.TrReannounce)
+	}
 	botUpdateListen()
 }
 
@@ -245,6 +250,11 @@ func torBotOperator() {
 					torbot.sendMessage(u.Message.Chat.ID, "请先输入设定的BotSecret,然后按照提示登录账号")
 					firstMsgCount--
 				}
+			}
+			if strings.HasPrefix(u.Message.Text, "/try") {
+				s := strings.TrimPrefix(u.Message.Text, "/try")
+				b, _ := strconv.Atoi(s)
+				cfg.TrReannounce = int64(b)
 			}
 			if chatID != 0 {
 				if len(u.Message.Text) == 6 {
@@ -364,7 +374,9 @@ func checkHDStreet() {
 	if cfg.HDStreetUsername != "" || cfg.HDStreetCookies != "" {
 		log.Println("check HDStreet")
 		tlist := getHDStreet()
-		if len(tlist) != 0 {
+		log.Println("======================HDStreetList is", len(HDStreetList))
+		log.Println("======================Tlist is", len(tlist))
+		if len(tlist) != 0 && len(tlist) > 100 {
 			checkUpdate(&tlist, &HDStreetList)
 			sendTorrents(&tlist)
 			HDStreetList = tlist

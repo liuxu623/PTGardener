@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 
@@ -300,4 +301,23 @@ func downloadTorrent(URL string) {
 		log.Println(resp.ToString())
 	}
 
+}
+
+// TrReannounce is
+func TrReannounce(i int64) {
+	transmissionbt, err := transmissionrpc.New(cfg.TRRequestURL, cfg.TRUsername, cfg.TRPassword, &transmissionrpc.AdvancedConfig{
+		HTTPS: false,
+		Port:  cfg.TRRequestPort,
+	})
+	if err != nil {
+		log.Println(err)
+	}
+	for {
+		time.Sleep(time.Duration(i) * time.Second)
+		log.Println("======获取更多Peer=======")
+		err = transmissionbt.TorrentReannounceRecentlyActive()
+		if err != nil {
+			log.Println(err)
+		}
+	}
 }

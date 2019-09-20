@@ -21,8 +21,8 @@ TRPassword=''
 
 #Transmission 远程连接地址
 TRRequestURL='' #请改成自己的地址,地址不要添加http，直接裸域名或IP
-TRRequestPort=9091
-
+TRRequestPort=49091
+TrReannounce=0 #主动向活动中的种子发送Reannounce指令，值为间隔秒数，0为不发送(指本程序，Tr依然会自己获取)
 #QBittorrent 远程连接账户，仅当DownloadMode为2时有效
 QBUsername=''
 QBPassword=''
@@ -83,21 +83,21 @@ FrdsCookies=''
 # FrdsVerify=false
 
 #MTeam 账户配置，不想监听请留空,暂时只支持Cookie
-# MTUsername=''
-# MTPassword=''
+MTUsername=''
+MTPassword=''
 MTCookies=''
-MTVerify=true        #是否开启两步验证
-MTTrackerSSL=true    #是否使用ssl  tracker
-MTTrackerIPv6=true   #是否使用ipv6 tracker
+MTVerify=true
+MTTrackerSSL=true
+MTTrackerIPv6=false
 
-#OpenCD 账户配置，不想监听请留空,暂未支持
+#OpenCD 账户配置，不想监听请留空
 OpenCDUsername=''
 OpenCDPassword=''
 OpenCDCookies=''
 OpenCDSSL=true
 OpenCDTrackerSSL=true
 
-#HDHome 账户配置，不想监听请留空,暂未支持
+#HDHome 账户配置，不想监听请留空
 HDHomeUsername=''
 HDHomePassword=''
 HDHomeCookies=''
