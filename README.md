@@ -33,6 +33,7 @@
 - 9.NASA
 - 10.OpenCD
 - 11.HDHome
+- 12.MTeam
 ### 更新信息
 目前程序暂定版本为0.0.1beta，暂时支持站点为三个，MoeCat、铂金家、猫站，程序更新将唯一更新到本帖。遇到任何问题或不知如何操作可开启issues。
 2019.9.13 更新：更新Pter下载链接，支持了ourbits和hdsky，支持设置cookie，支持CHD，支持QB远程下载，提示信息优化，修复一些bug。
