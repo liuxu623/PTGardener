@@ -34,7 +34,7 @@ func getMoeCat() []Torrent {
 			"cookie":     cfg.MoeCatCookies,
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 		}
-		req.SetTimeout(30 * time.Second)
+		req.SetTimeout(60 * time.Second)
 		resp, err := r.Get("https://www.moecat.best/torrents.php", header)
 		if err != nil {
 			log.Println(err)
@@ -114,7 +114,7 @@ func getPTHome() []Torrent {
 			"cookie":     cfg.PTHomeCookies,
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 		}
-		req.SetTimeout(30 * time.Second)
+		req.SetTimeout(60 * time.Second)
 		resp, err := r.Get("https://www.pthome.net/torrents.php", header)
 		if err != nil {
 			log.Println(err)
@@ -206,7 +206,7 @@ func getPTer() []Torrent {
 			"cookie":     cfg.PTerCookies,
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 		}
-		req.SetTimeout(30 * time.Second)
+		req.SetTimeout(60 * time.Second)
 		resp, err := r.Get("https://pter.club/torrents.php", header)
 		if err != nil {
 			log.Println(err)
@@ -297,7 +297,7 @@ func getPTer() []Torrent {
 						cc = strings.TrimSpace(cc)
 						torrent.Title2 = cc
 					}
-					if i == 4 {
+					if i == 5 {
 						s.Find("a").Each(func(i int, s *goquery.Selection) {
 							alt, ok := s.Find("img").Attr("alt")
 							if ok {
@@ -309,19 +309,19 @@ func getPTer() []Torrent {
 							}
 						})
 					}
-					if i == 8 {
+					if i == 9 {
 						torrent.Living = s.Text()
 					}
-					if i == 9 {
+					if i == 10 {
 						torrent.Size = s.Text()
 					}
-					if i == 10 {
+					if i == 11 {
 						torrent.Four = "↑" + s.Text()
 					}
-					if i == 11 {
+					if i == 12 {
 						torrent.Four += " ↓" + s.Text()
 					}
-					if i == 12 {
+					if i == 13 {
 						torrent.Four += " ✓" + s.Text()
 						torrentList = append(torrentList, torrent)
 					}
@@ -499,7 +499,7 @@ func getCHDBits() []Torrent {
 			"cookie":     cfg.CHDBitsCookies,
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 		}
-		req.SetTimeout(30 * time.Second)
+		req.SetTimeout(60 * time.Second)
 		resp, err := r.Get("https://chdbits.co/torrents.php", header)
 		if err != nil {
 			log.Println(err)
@@ -590,7 +590,7 @@ func getOurBits() []Torrent {
 			"cookie":     cfg.OurBitsCookies,
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 		}
-		req.SetTimeout(30 * time.Second)
+		req.SetTimeout(60 * time.Second)
 		resp, err := r.Get("https://ourbits.club/torrents.php", header)
 		if err != nil {
 			log.Println(err)
@@ -683,7 +683,7 @@ func getHDSkey() []Torrent {
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 			"cookie":     cfg.HDSkyCookies,
 		}
-		req.SetTimeout(30 * time.Second)
+		req.SetTimeout(60 * time.Second)
 		resp, err := r.Get("https://hdsky.me/torrents.php", header)
 		if err != nil {
 			log.Println(err)
@@ -778,7 +778,7 @@ func getSSD() []Torrent {
 			"cookie":     cfg.SSDCookies,
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 		}
-		req.SetTimeout(30 * time.Second)
+		req.SetTimeout(60 * time.Second)
 		resp, err := r.Get("https://springsunday.net/torrents.php", header)
 		if err != nil {
 			log.Println(err)
@@ -874,7 +874,7 @@ func getFrds() []Torrent {
 			"cookie":     cfg.FrdsCookies,
 			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 		}
-		req.SetTimeout(30 * time.Second)
+		req.SetTimeout(60 * time.Second)
 		resp, err := r.Get("https://pt.keepfrds.com/torrents.php", header)
 		if err != nil {
 			log.Println(err)
@@ -965,7 +965,7 @@ func getMT() []Torrent {
 			// "Accept-Language":           "zh-CN,zh;q=0.9,zh-TW;q=0.8",
 			"cookie": cfg.MTCookies,
 		}
-		req.SetTimeout(30 * time.Second)
+		req.SetTimeout(60 * time.Second)
 		resp, err := r.Get("https://pt.m-team.cc/torrents.php", header)
 		if err != nil {
 			log.Println(err)
@@ -978,6 +978,7 @@ func getMT() []Torrent {
 		doc, err := goquery.NewDocumentFromResponse(resp.Response())
 		if err != nil {
 			log.Println(err)
+			continue
 		}
 		for vvv := 3; vvv > 0; vvv-- {
 			if strings.Contains(doc.Text(), "請輸入驗證器上顯示的6位元驗證碼") {

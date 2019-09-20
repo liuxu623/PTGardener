@@ -303,6 +303,9 @@ func titleEscape(t Torrent) string {
 		stat = "<b>" + t.Status + "</b>"
 	}
 	title := cfg.TitleStyle
+	for i := len(title); i-41 < 0; i++ {
+		title += " "
+	}
 	title = strings.Replace(title, "$Site", t.Site, -1)
 	title = strings.Replace(title, "$Type", t.Ttype, -1)
 	title = strings.Replace(title, "$Title1", t.Title1, -1)
